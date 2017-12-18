@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>神经网络翻译客户端</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" href="layui/src/css/layui.css">
+        <style>
+            .demo-carousel{height: 200px; line-height: 200px; text-align: center;}
+            .textarea-source-translate{min-height: 200px;height: 200px;}
+            .layui-footer {
+                position: fixed; 
+                /* left: 200px; */
+                /* right: 0; */
+                width: 100%;
+                bottom: 0;
+                height: 44px;
+                line-height: 44px;
+                /*padding: 0 15px;*/
+                background-color: #eee;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- html内容区域start -->
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <div class="layui-carousel" id="test1">
+                    <div carousel-item>
+                        <div class="layui-bg-green"><p class="layui-bg-green demo-carousel"></p></div>
+                        <div class="layui-bg-red"><p class="layui-bg-red demo-carousel"></p></div>
+                        <div class="layui-bg-blue"><p class="layui-bg-blue demo-carousel"></p></div>
+                        <div class="layui-bg-orange"><p class="layui-bg-orange demo-carousel"></p></div>
+                        <div class="layui-bg-cyan"><p class="layui-bg-cyan demo-carousel"></p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form class="layui-form layui-form-pane" id="translate-form" action="">
+            <div class="layui-tab-content">
+                <div class="layui-tab-item layui-show">
+                    <hr class="layui-bg-green">
+                    <div class="layui-row">
+                        <div class="layui-col-xs6">
+                            <div class="layui-form-item">
+                                <input type="radio" name="source" value="zh" title="中文"checked="">
+                                <input type="radio" name="source" value="ar" title="阿拉伯文" >
+                                <a class="layui-btn layui-btn-normal layui-btn-sm" id="change" style="float:right;">切换</a>
+                            </div>
+                        </div>
+                        <div class="layui-col-xs6">
+                            <div class="layui-form-item">
+                                <input type="radio" name="translate" value="zh" title="中文">
+                                <input type="radio" name="translate" value="ar" title="阿拉伯文"  checked="">
+                                <button class="layui-btn layui-btn-normal layui-btn-sm" lay-submit="" lay-filter="translate">翻译</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-tab-content">
+                <div class="layui-tab-item layui-show layui-form-pane">
+                    <div class="layui-row">
+                        <div class="layui-col-xs6">
+                            <div class="layui-form-item layui-form-text">
+                                <label class="layui-form-label">源文</label>
+                                <div class="layui-input-block">
+                                    <textarea  id="src" placeholder="请输入内容" class="layui-textarea textarea-source-translate"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-col-xs6">
+                            <div class="layui-form-item layui-form-text">
+                                <label class="layui-form-label">译文</label>
+                                <div class="layui-input-block">
+                                    <textarea placeholder="" id="output_text" readonly="readonly" class="layui-textarea textarea-source-translate"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <!-- 底部-->
+        <div class="layui-tab-content" style="">
+            <div class="layui-tab-item layui-show">
+                <div class="layui-footer">
+                    <!-- 底部固定区域 -->
+                    © openNmt测试客户端-自用
+                </div>
+            </div>
+        </div>
+        <!-- 底部-->
+        <!-- html内容区域end -->
+
+        <!-- js脚本区域start -->
+        <script src="layui/src/layui.js"></script>
+        <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+        <!--[if lt IE 9]>
+          <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+          <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->  
+        <script>
+            layui.use(['layer', 'form', 'carousel'], function () {
+                layer = layui.layer //弹层
+                        , $ = layui.jquery
+                        , form = layui.form
+                        , carousel = layui.carousel //轮播
+                var srcTemp = "";
+                //执行一个轮播实例
+                carousel.render({
+                    elem: '#test1'
+                    , width: '100%' //设置容器宽度
+                    , height: 200
+                    , arrow: 'none' //不显示箭头
+                    , anim: 'fade' //切换动画方式
+                });
+
+                //object追加
+                function putObj(obj, key, value) {
+                    obj[key] = value;
+                    return obj;
+                }
+                //监听提交
+                form.on('submit(translate)', function (data) {
+                    var valueSrc = $("#src").val();
+                    srcTemp = valueSrc;
+                    if (null == valueSrc || "" == valueSrc || '' == valueSrc) {
+                        layer.alert("请输入翻译内容", {
+                            title: 'ERROR'
+                        });
+                        return false;
+                    }
+                    //数组
+                    var arrayData = [];
+                    arrayData.push({"src": valueSrc});
+                    var send = JSON.stringify(arrayData);
+                    //发送数据
+                    var sendData = putObj(data.field, "src", send);
+                    //ajax提交数据
+                    $.ajax({
+                        type: "POST",
+                        url: "translate",
+                        data: sendData,
+                        dataType: "json",
+                        beforeSend: function (request) {
+                        },
+                        success: function (request, v) {
+                            console.log(request);
+                            $("#output_text").val(request.data[0][0].tgt);
+                        },
+                        error: function (request, v) {
+                            console.log(request);
+                        }
+                    });
+                    console.log(arrayData);
+                    return false;
+                });
+                //work with jQuery 1.x  
+                function serializeObject(serializeArray) {
+                    var obj = new Object();
+                    $.each(serializeArray, function (index, param) {
+                        if (!(param.name in obj)) {
+                            obj[param.name] = param.value;
+                        }
+                    });
+                    return obj;
+                }
+                ;
+                //失去焦点请求翻译
+                $('#src').bind({
+                    blur: function () {
+                        var dataArray = $('#translate-form').serializeArray();
+                        var data = serializeObject(dataArray);
+                        var valueSrc = $("#src").val();
+                        if (srcTemp == valueSrc || srcTemp + '' == valueSrc + '') {
+                            return false;
+                        }
+                        srcTemp = valueSrc;
+                        if (null == valueSrc || "" == valueSrc || '' == valueSrc) {
+                            layer.alert("请输入翻译内容", {
+                                title: 'ERROR'
+                            });
+                            return false;
+                        }
+                        //数组
+                        var arrayData = [];
+                        arrayData.push({"src": valueSrc});
+                        var send = JSON.stringify(arrayData);
+                        //发送数据
+                        var sendData = putObj(data, "src", send);
+                        //ajax提交数据
+                        $.ajax({
+                            type: "POST",
+                            url: "translate",
+                            data: sendData,
+                            dataType: "json",
+                            beforeSend: function (request) {
+                            },
+                            success: function (request, v) {
+                                console.log(request);
+                                $("#output_text").val(request.data[0][0].tgt);
+                            },
+                            error: function (request, v) {
+                                console.log(request);
+                            }
+                        });
+                    }
+                })
+            });
+        </script>
+        <!-- js脚本区域end -->
+    </body>
+</html>
